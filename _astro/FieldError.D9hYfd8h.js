@@ -1,0 +1,1 @@
+import{j as o}from"./jsx-runtime.D_zvdyIk.js";const e={margin:"0.35rem 0 0",fontSize:"0.78rem",fontWeight:600,color:"var(--color-danger, #c0392b)"},n={border:"1px solid var(--color-danger, #c0392b)"};function l({error:r}){return r?o.jsx("p",{style:e,children:r}):null}export{l as F,n as e};

@@ -1,0 +1,16 @@
+# Harvard Alumni in Tech
+
+> The official Harvard Alumni Group for technology, encouraging innovation and connecting technologists across the Harvard community.
+
+## Key pages
+
+- [Home](https://nseldeib.github.io/)
+- [Events](https://nseldeib.github.io/events)
+- [Blog](https://nseldeib.github.io/blog)
+
+## Contact
+
+- Email: ben@harvardintech.com
+- LinkedIn: https://www.linkedin.com/company/harvardintech/
+- Twitter: https://twitter.com/harvardintech
+- Facebook: https://facebook.com/harvardintech

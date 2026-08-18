@@ -1,0 +1,1 @@
+import{j as o}from"./jsx-runtime.D_zvdyIk.js";const t={color:"#b91c1c",fontSize:"0.85rem",marginTop:"var(--space-sm)",marginBottom:0,lineHeight:1.5};function e({message:r}){return r?o.jsx("p",{style:t,role:"alert",children:r}):null}export{e as U};

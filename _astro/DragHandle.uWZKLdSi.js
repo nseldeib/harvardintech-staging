@@ -1,0 +1,1 @@
+import{j as a}from"./jsx-runtime.D_zvdyIk.js";import{d as o}from"./configEditorStyles.BCiYYu1e.js";function s({label:r,style:t,...e}){return a.jsx("span",{role:"button","aria-label":r,title:"Drag to reorder",...e,style:{...o,...t},children:"⠿"})}export{s as D};

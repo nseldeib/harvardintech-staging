@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Keep this out of search engines. This is an internal review artifact. -->
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Harvard Alumni in Tech — Project Status &amp; Decisions (internal)</title>
+    <style>
+      :root {
+        --crimson: #a41034;
+        --crimson-deep: #7d1424;
+        --ink: #1e1a1b;
+        --ink-2: #5c5559;
+        --ink-3: #928b8e;
+        --paper: #ffffff;
+        --paper-2: #f6f3f1;
+        --line: rgba(30, 26, 27, 0.14);
+        --green: #1c7c46;
+        --amber: #b7791f;
+        --red: #a4102f;
+        --sans: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        --serif: 'Times New Roman', Times, Georgia, serif;
+        --mono: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: var(--sans);
+        color: var(--ink);
+        background: var(--paper-2);
+        line-height: 1.55;
+      }
+      a { color: var(--crimson); }
+
+      /* ---- Passphrase gate (DETERRENT ONLY — see note in the script) ---- */
+      #gate {
+        position: fixed; inset: 0; z-index: 999;
+        display: flex; align-items: center; justify-content: center;
+        background: var(--ink);
+        padding: 24px;
+      }
+      #gate .box {
+        background: #fff; border-radius: 6px; padding: 34px 30px; max-width: 380px;
+        width: 100%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      }
+      #gate h1 { font-size: 18px; margin: 0 0 6px; }
+      #gate p { color: var(--ink-2); font-size: 13px; margin: 0 0 18px; }
+      #gate input {
+        width: 100%; padding: 11px 12px; font-size: 15px; border: 1px solid var(--line);
+        border-radius: 4px; margin-bottom: 12px;
+      }
+      #gate button {
+        width: 100%; padding: 11px; font-size: 14px; font-weight: 700; color: #fff;
+        background: var(--crimson); border: 0; border-radius: 4px; cursor: pointer;
+      }
+      #gate button:hover { background: var(--crimson-deep); }
+      #gate .err { color: var(--red); font-size: 12px; min-height: 16px; margin-top: 8px; }
+      #content { display: none; }
+
+      /* ---- Layout ---- */
+      .util {
+        background: var(--crimson); color: #fff; font-family: var(--mono);
+        font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase;
+        text-align: center; padding: 7px 16px;
+      }
+      .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+      header.page { background: var(--ink); color: #fff; padding: 40px 0 34px; }
+      header.page .kick {
+        font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em;
+        text-transform: uppercase; color: var(--crimson);
+      }
+      header.page h1 { font-size: 34px; margin: 8px 0 10px; letter-spacing: -0.02em; }
+      header.page p { color: #cfcacb; max-width: 640px; margin: 0; font-size: 15px; }
+      .meta { margin-top: 16px; font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+
+      section { padding: 40px 0; border-bottom: 1px solid var(--line); }
+      section h2 {
+        font-size: 12px; font-family: var(--mono); letter-spacing: 0.12em;
+        text-transform: uppercase; color: var(--crimson); margin: 0 0 4px;
+      }
+      section .lede { font-size: 22px; margin: 0 0 22px; letter-spacing: -0.01em; }
+
+      /* Status table */
+      table { width: 100%; border-collapse: collapse; font-size: 14px; background: #fff; }
+      th, td { text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+      th { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+      tbody tr:last-child td { border-bottom: 0; }
+
+      .badge {
+        display: inline-block; font-family: var(--mono); font-size: 10px; font-weight: 700;
+        letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 8px; border-radius: 20px; white-space: nowrap;
+      }
+      .b-built { background: rgba(28,124,70,0.12); color: var(--green); }
+      .b-partial { background: rgba(183,121,31,0.14); color: var(--amber); }
+      .b-missing { background: rgba(164,16,47,0.10); color: var(--red); }
+
+      /* Decision blocks */
+      .decision {
+        background: #fff; border: 1px solid var(--line); border-left: 3px solid var(--crimson);
+        border-radius: 4px; padding: 18px 20px; margin-bottom: 16px;
+      }
+      .decision h3 { margin: 0 0 6px; font-size: 17px; }
+      .decision .q { color: var(--ink-2); margin: 0 0 12px; font-size: 14px; }
+      .opts { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+      .opts li { font-size: 13.5px; padding: 9px 12px; background: var(--paper-2); border-radius: 4px; }
+      .opts b { color: var(--ink); }
+      .rec { color: var(--green); font-weight: 700; font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+      .feedback { margin-top: 12px; font-size: 12.5px; color: var(--ink-3); font-style: italic; }
+
+      /* Item cards */
+      .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+      /* For a section holding ONE card. The auto-fill track above is right for a
+         grid of short status cards, but it strands a single card in a 320px
+         column and turns any real explanation into a tall ribbon of text. This
+         caps the measure at a readable width instead. */
+      .cards--wide { grid-template-columns: minmax(0, 760px); }
+      .card .pts { margin: 0 0 10px; padding-left: 18px; }
+      .card .pts li { font-size: 13.5px; color: var(--ink-2); line-height: 1.55; margin-bottom: 6px; }
+      .card .pts li b { color: var(--ink); }
+      .card { background: #fff; border: 1px solid var(--line); border-radius: 5px; padding: 18px 18px 16px; }
+      .card .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+      .card h3 { margin: 0; font-size: 16px; }
+      .card .desc { font-size: 13.5px; color: var(--ink-2); margin: 0 0 10px; }
+      .card .row { font-size: 12.5px; margin: 4px 0; }
+      .card .row .k { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); display: block; }
+      .card .row.decide { color: var(--crimson-deep); }
+
+      footer.page { padding: 34px 0 60px; color: var(--ink-2); font-size: 13px; }
+      footer.page code { font-family: var(--mono); font-size: 12px; background: #fff; padding: 1px 5px; border-radius: 3px; border: 1px solid var(--line); }
+      .callout { background: #fff; border: 1px solid var(--line); border-radius: 5px; padding: 14px 16px; font-size: 13px; color: var(--ink-2); margin-top: 14px; }
+      @media (max-width: 620px) { header.page h1 { font-size: 26px; } .hide-sm { display: none; } }
+    </style>
+  </head>
+  <body>
+    <!-- ============ PASSPHRASE GATE ============ -->
+    <div id="gate">
+      <div class="box">
+        <h1>Harvard Alumni in Tech</h1>
+        <p>Internal project review. Enter the passphrase you were given.</p>
+        <input id="pass" type="password" placeholder="Passphrase" autocomplete="off" />
+        <button id="enter">View</button>
+        <div class="err" id="err"></div>
+      </div>
+    </div>
+
+    <!-- ============ CONTENT ============ -->
+    <div id="content">
+      <div class="util">Internal review · please don't share publicly</div>
+
+      <header class="page">
+        <div class="wrap">
+          <div class="kick">Project Status &amp; Decisions</div>
+          <h1>Harvard Alumni in Tech — website revamp</h1>
+          <p>
+            Where the new site (a modern rebuild of the current Strikingly site, hosted on
+            GitHub Pages) stands today, and the decisions we need your input on before launch.
+          </p>
+          <div class="meta">Living snapshot · last updated 2026-08-05 · 589 tests green, build clean · new since the last update: the domain cutover runbook (the move mapped out in full, none of it performed) and the supporter recognition review (the donor wall as built, nine directions, and the spreadsheet import) · this private preview is now live (you are reading it)</div>
+        </div>
+      </header>
+
+      <!-- ALSO UNDER REVIEW -->
+      <!-- One internal link reaches everything under review, rather than a set of
+           raw URLs pasted into separate emails. Each artifact listed here carries
+           its own passphrase gate — they are standalone files in public/, so none
+           of them inherit the site's PreviewGate. -->
+      <section>
+        <div class="wrap">
+          <h2>Also under review</h2>
+          <div class="lede">Work that is not part of the live site yet, shared for comment.</div>
+          <!-- Prose-heavy cards, so they get the wide single-column grid and stack
+               rather than being stranded in a 320px auto-fill track as very tall
+               columns of text beside empty ones. -->
+          <div class="cards cards--wide">
+            <div class="card">
+              <div class="top"><h3>Supporter recognition</h3><span class="badge b-partial">Your call</span></div>
+              <p class="desc">
+                One page, three parts: the donor wall <em>as built today</em>, nine
+                directions for replacing it, and a walkthrough of the bi-weekly
+                spreadsheet import. The 200 supporters shown are illustrative — there
+                is no real donor list yet.
+              </p>
+              <ul class="pts">
+                <li><b>Pick a direction, and a name.</b> Each of the nine carries a different candidate name, so they can be judged in place.</li>
+                <li><b>The import needs three answers.</b> The spreadsheet has no dollar amounts, no founding column and no anonymity column — so giving level, Founding Donor and “please don't name me” can't be filled from it at all.</li>
+                <li><b>Feedback goes in a doc.</b> The page collects nothing; it ends with an outline to paste. Everything is numbered (W1–W5, 01–09, I1–I4, Q1–Q4) so a one-line reaction lands exactly where you meant it.</li>
+              </ul>
+              <!-- RELATIVE, deliberately. Both tracks deploy under a base path
+                   (/harvardintech, /harvardintech-staging), so a root-absolute
+                   href would resolve to nseldeib.github.io/donor-network.html and
+                   404. A raw public/ file cannot read Astro's BASE_URL, so
+                   ../ is the only form that survives every base — and a file://
+                   open of this page as well. -->
+              <div class="row"><span class="k">Link</span> <a href="../donor-network.html">Open the supporter recognition review</a> — same passphrase as this page.</div>
+              <!-- The live wall itself, on the gated site build. Relative for the
+                   same base-path reason as the link above: this file is copied
+                   verbatim into dist/ and cannot read Astro's BASE_URL. -->
+              <div class="row"><span class="k">The wall, live</span> <a href="../donate#donors">See it on the Momentum Fund page</a> — it is empty today, which is the point of W5.</div>
+            </div>
+
+            <div class="card">
+              <div class="top"><h3>Domain cutover runbook</h3><span class="badge b-partial">Your call</span></div>
+              <p class="desc">
+                What it takes to move <code>harvardintech.com</code> off Strikingly and onto
+                the new site — written out in full so it can be reviewed <em>before</em> it is
+                run. <b>None of it has been done.</b> No DNS record has been read or changed,
+                and the live site is untouched.
+              </p>
+              <ul class="pts">
+                <li><b>Email is the thing that must not break.</b> <code>@harvardintech.com</code> mail runs separately from the website but through the same registrar screen, so the plan changes two settings and leaves the mail records strictly alone — and proves mail still flows before calling the move done.</li>
+                <li><b>Five questions are yours, not ours.</b> Who holds the GoDaddy login (that one blocks everything), whether the content is ready to be public, what happens to two internal pages that would otherwise ship to the public domain, and when to cut over.</li>
+                <li><b>Two layers.</b> The top reads plainly; the exact records, commands and rollback values are one click down for whoever runs it.</li>
+              </ul>
+              <!-- Relative for the same base-path reason as the links above: both
+                   tracks deploy under a base path and a raw public/ file cannot
+                   read Astro's BASE_URL. -->
+              <!-- Trailing slash, not `.html`: the runbook stopped being a raw
+                   public/ file and became a real route, so its output is
+                   cutover-runbook/index.html. Without the slash a relative link
+                   from this directory would resolve to a sibling FILE that no
+                   longer exists. -->
+              <div class="row"><span class="k">Link</span> <a href="../cutover-runbook/">Open the domain cutover runbook</a> — same passphrase as this page, and it now records what has been done.</div>
+              <div class="row decide"><span class="k">Decision</span> D1 (who holds the domain login) is the one that blocks the rest — it has been open since 2026-07-02.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STATUS AT A GLANCE -->
+      <section>
+        <div class="wrap">
+          <h2>Status at a glance</h2>
+          <div class="lede">Most of the site is built. The remaining work is login, launch plumbing, and content.</div>
+          <table>
+            <thead><tr><th>Area</th><th>Status</th><th class="hide-sm">Notes</th></tr></thead>
+            <tbody>
+              <tr><td>Homepage (all sections)</td><td><span class="badge b-built">Built</span></td><td class="hide-sm">Content-ready; incl. Volunteer button, Giving Campaign, LinkedIn footer</td></tr>
+              <tr><td>Navigation / menu &amp; dropdowns</td><td><span class="badge b-built">Built</span></td><td class="hide-sm">All dropdowns + links resolve. "Webinars"/"Podcasts" menu items were removed (the current site has neither). Substack is intentionally omitted (channel doesn't exist yet)</td></tr>
+              <tr><td>Chapters (5 cities)</td><td><span class="badge b-built">Built</span></td><td class="hide-sm">All 5 pages render; structure incl. committee + events per chapter; needs content</td></tr>
+              <tr><td>Events page</td><td><span class="badge b-built">Built</span></td><td class="hide-sm">Luma calendar + upcoming/past event lists (CMS-driven)</td></tr>
+              <tr><td>Outbound links (no old-site pointers)</td><td><span class="badge b-built">Built</span></td><td class="hide-sm">Audited: nothing links to the old Strikingly site. Donate opens an email (no donation platform yet); WhatsApp uses the real Google Form + group invite</td></tr>
+              <tr><td>Content Hub / Communities</td><td><span class="badge b-built">Built</span></td><td class="hide-sm">Blog (now populated from our Medium), Medium, LinkedIn, WhatsApp. Substack pending — channel not created yet (see "What we need from you")</td></tr>
+              <tr><td>Membership (About/Involve/Support)</td><td><span class="badge b-built">Built</span></td><td class="hide-sm">Sections + board present; verify roster</td></tr>
+              <tr><td>Analytics, SEO/AEO, Custom HTML, iFrame</td><td><span class="badge b-built">Built</span></td><td class="hide-sm">Shipped &amp; tested</td></tr>
+              <tr><td>Member login / Harvard Key SSO</td><td><span class="badge b-missing">Not built</span></td><td class="hide-sm">Hard, externally-gated — needs a decision</td></tr>
+              <tr><td>Sponsorship page</td><td><span class="badge b-built">Built</span></td><td class="hide-sm">New: a sponsor wall + inquiry section. Needs real sponsor names and logos</td></tr>
+              <tr><td>Donate / Momentum Fund</td><td><span class="badge b-partial">Built, needs a link</span></td><td class="hide-sm">Page refreshed; the button still opens an email because there is no donation platform yet (see decision 5)</td></tr>
+              <tr><td>Domain transfer from Strikingly</td><td><span class="badge b-missing">Not started</span></td><td class="hide-sm">Low effort; needs registrar/DNS access. Now mapped out step by step in the <a href="../cutover-runbook/">domain cutover runbook</a>, which the team ticks off as it goes: DNS stays at GoDaddy, e-mail is untouched, and the old site stays up as rollback</td></tr>
+              <tr><td>Content population</td><td><span class="badge b-partial">In progress</span></td><td class="hide-sm">CMS data entry (chapters, board, events)</td></tr>
+              <tr><td>Sharing a draft for review</td><td><span class="badge b-built">Built</span></td><td class="hide-sm">New: <strong>Preview link</strong> on any page, post, chapter, community or volunteer project puts that draft at a private URL you can send to one person — no login and no passphrase needed at their end. Optionally password-protect it, which genuinely encrypts the content rather than just hiding it. <strong>Previews</strong> in the editor lists them all and can mint a single link covering every one</td></tr>
+              <tr><td>Private shareable preview</td><td><span class="badge b-built">Live</span></td><td class="hide-sm">Done — this page is it. Password-protected and hidden from search engines. Nothing here is public, and harvardintech.com is untouched</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- DECISIONS -->
+      <section>
+        <div class="wrap">
+          <h2>Decisions we need your input on</h2>
+          <div class="lede">Five choices that unblock the rest of the project.</div>
+
+          <div class="decision">
+            <h3>1. How should members log in?</h3>
+            <p class="q">HBS Women's Association uses "Sign in with Harvard Key" — but they get it via a <b>paid alumni platform (iModules)</b>, not by building it. Harvard Key directly needs Harvard IT approval and can't run on our simple hosting.</p>
+            <ul class="opts">
+              <li><b>Defer login for v1</b> — launch the public site now, add login later. <span class="rec">Recommended</span></li>
+              <li><b>Lighter verification</b> — email magic-link or "Sign in with Google" + manual approval. No Harvard IT needed; captures more member data.</li>
+              <li><b>Harvard Key directly</b> — strongest, but needs an official Harvard sponsor + IT approval (slow, uncertain).</li>
+              <li><b>Paid alumni platform</b> — like HBSWA; handles login + CRM but costs money and replaces much of this custom build.</li>
+            </ul>
+            <p class="feedback">Your input: is member login required for launch, or a fast-follow? Is there a Harvard sponsor who could pursue Harvard Key?</p>
+          </div>
+
+          <div class="decision">
+            <h3>2. Events page layout</h3>
+            <p class="q">The current build is a clean Luma-calendar-first page. The hbswa.org example is a richer events directory.</p>
+            <ul class="opts">
+              <li><b>Keep the clean Luma-first page</b> — less work. <span class="rec">Recommended</span></li>
+              <li><b>Match the hbswa directory layout</b> — closer to the example, more design work.</li>
+            </ul>
+            <p class="feedback">Your input: which layout do you prefer?</p>
+          </div>
+
+          <div class="decision">
+            <h3>3. Domain (harvardintech.com)</h3>
+            <p class="q">We move the domain from Strikingly to the new site with zero downtime (stage on a subdomain, then switch). The only blocker is access.</p>
+            <ul class="opts">
+              <li><b>Who controls the domain today?</b> — the registrar login + DNS settings.</li>
+              <li><b>Is there email on @harvardintech.com?</b> — if so we must preserve it during the move.</li>
+              <li><b>When do we cut over?</b> — after everyone approves the staged preview.</li>
+            </ul>
+            <p class="feedback">Your input: point us to whoever manages the domain, and a target launch window.</p>
+          </div>
+
+          <div class="decision">
+            <h3>4. How private should the preview be?</h3>
+            <p class="q">This page (and the work-in-progress site) are shared via a link. Free GitHub Pages links are public by nature.</p>
+            <ul class="opts">
+              <li><b>Unlisted link + noindex + passphrase</b> (what you're using now) — simple, free; a deterrent, not bank-grade security.</li>
+              <li><b>Real password protection</b> — host the preview on Cloudflare/Netlify (free) for a true password gate.</li>
+            </ul>
+            <p class="feedback">Your input: is the current passphrase gate enough, or do we want real access control?</p>
+          </div>
+
+          <div class="decision">
+            <h3>5. Who provides the content?</h3>
+            <p class="q">The site is built but empty in places. Filling it is point-and-click in the editor (no coding).</p>
+            <ul class="opts">
+              <li><b>Chapter committees + events</b> for Boston, NYC, London, DC/DMV, Seattle.</li>
+              <li><b>Board of Directors</b> — real bios + photos.</li>
+              <li><b>Content Hub</b> — blog posts, podcasts, newsletter links.</li>
+            </ul>
+            <p class="feedback">Your input: who owns gathering this, and by when?</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- WHAT WE NEED -->
+      <section>
+        <div class="wrap">
+          <h2>What we need from you</h2>
+          <div class="lede">Concrete assets / URLs to finish the site — none block sharing this preview.</div>
+          <ul class="opts">
+            <li><b>Substack URL</b> — the channel doesn't exist yet; once it's created, send the link and we'll add it to the Content Hub.</li>
+            <li><b>Google Analytics 4 Measurement ID</b> (<code>G-XXXXXXXXXX</code>) — when you want analytics on; paste-in, no code.</li>
+            <li><b>Donation link</b> — there's no donation platform yet; "Donate" emails for now. If you set up Givebutter/Donorbox/etc., send the URL.</li>
+            <li><b>Chapter content</b> — committee members + events for Boston, NYC, London, DC/DMV, Seattle.</li>
+            <li><b>Board of Directors</b> — final roster, bios, and photos.</li>
+            <li><b>Domain access</b> — GoDaddy DNS (for the eventual launch cutover; email stays untouched).</li>
+            <li><b>Medium publication name</b> — the site now says "Harvard Alumni in Tech" everywhere, but the Medium publication is still titled "Harvard in Tech" at <code>medium.com/harvard-in-tech</code>, so the site's prose and the publication no longer match. Renaming the publication in Medium's settings lines them up. We deliberately did <i>not</i> touch the URLs: changing the handle breaks every existing link to the eight AI Edition articles the blog points at, so that trade-off is your call rather than something to do quietly.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- FILL OR REMOVE -->
+      <section>
+        <div class="wrap">
+          <h2>Content to fill or remove</h2>
+          <div class="lede">Placeholders &amp; stubs to resolve before launch — each is a "fill it in" or "remove it" decision.</div>
+          <div class="cards">
+            <div class="card">
+              <div class="top"><h3>Podcasts</h3><span class="badge b-built">Removed</span></div>
+              <p class="desc">The current site has no podcast, so the "Podcasts" menu item was removed rather than left pointing nowhere. Re-add it once a podcast exists.</p>
+            </div>
+            <div class="card">
+              <div class="top"><h3>Webinars</h3><span class="badge b-built">Removed</span></div>
+              <p class="desc">Same as Podcasts — no Webinars content yet, so the menu item was removed. Re-add the item (and a section) once there's real content.</p>
+            </div>
+            <div class="card">
+              <div class="top"><h3>Events calendar (Luma)</h3><span class="badge b-built">Done</span></div>
+              <p class="desc">The inline Luma calendar is live on the events page — it renders the real calendar, currently showing the next Alumni Founders Co-working Day. Nothing further needed here; new events added in Luma appear automatically.</p>
+            </div>
+            <div class="card">
+              <div class="top"><h3>Events list</h3><span class="badge b-partial">Fill</span></div>
+              <p class="desc">Eight events are entered, but every one has now passed — the most recent was in July. The homepage "Upcoming events" band therefore shows its empty state, pointing visitors at the Luma calendar instead. Either add the upcoming events to the site, or treat Luma as the single source of truth and let the band stay an invitation to subscribe.</p>
+            </div>
+            <div class="card">
+              <div class="top"><h3>Stats numbers</h3><span class="badge b-partial">Verify</span></div>
+              <p class="desc">The homepage shows "8,000+ alumni technologists · 6 global chapters · 100+ events · Est. 2013." These are editable in the CMS (Site Settings → Homepage stats band). Confirm they're the real, current numbers.</p>
+            </div>
+            <div class="card">
+              <div class="top"><h3>Sponsors</h3><span class="badge b-missing">Decide</span></div>
+              <p class="desc">The sponsors page currently lists three example partners — "Example Presenting Partner", "Example Chapter Partner", "Example Event Partner" — which read as real placements to anyone who doesn't know better. Replace them with real partners, or remove them and let the page show its designed "partners coming soon" state.</p>
+            </div>
+            <div class="card">
+              <div class="top"><h3>Volunteer projects</h3><span class="badge b-partial">Fill</span></div>
+              <p class="desc">One project has been written but is still marked Draft, so the volunteer projects grid renders empty on the public site. Publish it — or add the rest of the open roles — to turn that section on.</p>
+            </div>
+            <div class="card">
+              <div class="top"><h3>Board of Directors</h3><span class="badge b-partial">Fill</span></div>
+              <p class="desc">5 members are in with photos + roles, but none have a bio yet (the live site has none to reproduce). Confirm the full roster and provide each person's bio — cards render cleanly with name + role until then.</p>
+            </div>
+            <div class="card">
+              <div class="top"><h3>Blog</h3><span class="badge b-built">Done (Medium)</span></div>
+              <p class="desc">Now populated: a short intro post plus the latest articles from our Medium publication (AI Edition + Spotlight interviews), each linking through to the full piece on Medium. Swap in natively-written posts anytime via the editor.</p>
+            </div>
+            <div class="card">
+              <div class="top"><h3>Donate</h3><span class="badge b-missing">Decide</span></div>
+              <p class="desc">No donation platform yet — "Donate" opens an email for now. Set up a platform (Givebutter/Donorbox/etc.) and send the link, or keep it as email.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ITEM DETAIL CARDS -->
+      <section>
+        <div class="wrap">
+          <h2>Detail by area</h2>
+          <div class="lede">Plain-language status for each part of the site.</div>
+          <div class="cards">
+
+            <div class="card">
+              <div class="top"><h3>Homepage</h3><span class="badge b-built">Built</span></div>
+              <p class="desc">Hero carousel, stats, upcoming events, chapters, focus areas, content hub, board, "bring it to your city" (with Volunteer button), giving campaign, WhatsApp, footer with LinkedIn.</p>
+              <div class="row"><span class="k">Left to do</span> Real content only.</div>
+            </div>
+
+            <div class="card">
+              <div class="top"><h3>Navigation</h3><span class="badge b-built">Built</span></div>
+              <p class="desc">Programs · Chapters · Communities · Content Hub · Membership — matches the planned structure, including nested About/Get Involved/Support. All dropdown links resolve.</p>
+              <div class="row decide"><span class="k">Small gaps</span> "Webinars" &amp; "Podcasts" menu items were removed (the current site has neither). Substack is omitted for now — the channel doesn't exist yet; we'll add it once there's a URL.</div>
+            </div>
+
+            <div class="card">
+              <div class="top"><h3>Chapters</h3><span class="badge b-built">Built</span></div>
+              <p class="desc">All 5 cities. Each chapter page shows committee members, chapter events, sign-up, links, and a gallery.</p>
+              <div class="row"><span class="k">Left to do</span> Enter each chapter's real people &amp; events.</div>
+            </div>
+
+            <div class="card">
+              <div class="top"><h3>Events</h3><span class="badge b-built">Built</span></div>
+              <p class="desc">Luma calendar embedded + upcoming/past lists (CMS-driven).</p>
+              <div class="row decide"><span class="k">Decision</span> Optional richer directory layout (Decision #2). Webinars/Podcasts were dropped for now.</div>
+              <div class="row"><span class="k">Left to do</span> Enter real events, or rely on the Luma calendar.</div>
+            </div>
+
+            <div class="card">
+              <div class="top"><h3>Analytics / SEO / AEO / Custom HTML / iFrame</h3><span class="badge b-built">Built</span></div>
+              <p class="desc">Google Analytics (paste an ID to turn on), structured data for search, robots.txt/llms.txt, verification-tag &amp; pixel boxes, per-page embeds.</p>
+              <div class="row"><span class="k">Status</span> Shipped &amp; tested.</div>
+            </div>
+
+            <div class="card">
+              <div class="top"><h3>Member login / gated portal</h3><span class="badge b-missing">Not built</span></div>
+              <p class="desc">A members-only login/portal ("Sign in with Harvard Key" as HBSWA has). Today "Membership" is just info sections (About/Get Involved/Support) — there is no member login yet. (The /admin area is a separate, password-gated CRM for organizers, not a member portal.)</p>
+              <div class="row decide"><span class="k">Decision</span> See Decision #1.</div>
+              <div class="row"><span class="k">Effort</span> Large / uncertain — depends on the path chosen.</div>
+            </div>
+
+            <div class="card">
+              <div class="top"><h3>Domain transfer</h3><span class="badge b-missing">Not started</span></div>
+              <p class="desc">Move harvardintech.com from Strikingly to the new site with no downtime.</p>
+              <div class="row decide"><span class="k">Decision</span> See Decision #3 (needs registrar access).</div>
+              <div class="row"><span class="k">Effort</span> ~half a day once we have access.</div>
+            </div>
+
+            <div class="card">
+              <div class="top"><h3>Content population</h3><span class="badge b-partial">In progress</span></div>
+              <p class="desc">Filling in chapters, board, events, and posts through the editor — no coding required.</p>
+              <div class="row decide"><span class="k">Decision</span> See Decision #5 (who + by when).</div>
+            </div>
+
+            <div class="card">
+              <div class="top"><h3>Private preview &amp; publishing</h3><span class="badge b-built">Live</span></div>
+              <p class="desc">Done. The whole site — this page included — is behind a passphrase and hidden from search engines, and edits you make redeploy it automatically. Publishing to the real harvardintech.com stays a separate, deliberate step at the domain cutover, so nothing you do here can reach the public site by accident.</p>
+              <div class="row decide"><span class="k">Decision</span> Still open: see Decision #4 — the passphrase is a deterrent, not real access control. Tell us if that's not enough.</div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <footer class="page">
+        <div class="wrap">
+          <p>This is a living snapshot for internal review, refreshed as decisions are made. The full technical write-ups live in the repo under <code>docs/scoping/</code> (Harvard Key SSO options and the domain-transfer runbook).</p>
+          <div class="callout">
+            <b>A note on this link's privacy:</b> the passphrase above is a deterrent to keep the page out of casual view and search engines — it is not strong security. Please don't forward the link publicly. If we need genuinely private access, we can move it to a password-protected host.
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      // ---- Passphrase gate: DETERRENT ONLY ----
+      // This runs in the browser, so the page's content is technically present in
+      // the downloaded source — a determined viewer could bypass it. Combined with
+      // an unlisted URL + noindex it's enough to keep the page out of casual/public
+      // view. For real access control, host behind a server-side password
+      // (Cloudflare Pages / Netlify). Change PASSPHRASE to rotate access.
+      (function () {
+        var PASSPHRASE = 'crimson2026'; // share this out-of-band with reviewers
+        var KEY = 'hait-review-ok';
+        var gate = document.getElementById('gate');
+        var content = document.getElementById('content');
+        var input = document.getElementById('pass');
+        var err = document.getElementById('err');
+
+        function unlock() {
+          gate.style.display = 'none';
+          content.style.display = 'block';
+        }
+        if (sessionStorage.getItem(KEY) === '1') { unlock(); }
+
+        function tryEnter() {
+          if (input.value.trim() === PASSPHRASE) {
+            try { sessionStorage.setItem(KEY, '1'); } catch (e) {}
+            unlock();
+          } else {
+            err.textContent = 'Incorrect passphrase.';
+            input.value = '';
+            input.focus();
+          }
+        }
+        document.getElementById('enter').addEventListener('click', tryEnter);
+        input.addEventListener('keydown', function (e) { if (e.key === 'Enter') tryEnter(); });
+        input.focus();
+      })();
+    </script>
+  </body>
+</html>
